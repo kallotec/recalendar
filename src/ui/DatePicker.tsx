@@ -1,15 +1,18 @@
 'use client'
-import { ChangeEvent, useState } from "react";
+import { useState } from "react";
+
+function getTodaysDate(): string {
+    return new Date().toISOString().slice(0, 10)
+}
 
 export default function DatePicker() {
-    let now = new Date().toLocaleDateString();
-    let [ selectedDate, setSelectedDate ] = useState(now);
-    const handleInputDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setSelectedDate(e.target.value);
-    };
+    let [selectedDate, setSelectedDate] = useState(getTodaysDate());
     return <>
-        <div>
-            Date: <input type="date" value={selectedDate} onChange={handleInputDateChange} />
-        </div>
+        <label htmlFor="selectedDate">Select date:</label>
+        <input
+            type="date"
+            name="selectedDate"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)} />
     </>
 }
