@@ -3,7 +3,11 @@
 
 ## Run locally
 
-Apply all migrations to target db
+Install packages
+
+`npm install`
+
+Apply all migrations to local sqlite db
 
 `npx drizzle-kit migrate`
 
