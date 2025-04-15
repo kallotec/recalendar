@@ -1,23 +1,19 @@
-import { GetByDate, Delete, Insert, Update } from '@/lib/EventsRepo';
+'use client'
+import DatePicker from './DatePicker';
 import * as schema from '../db/schema';
 type Event = typeof schema.events.$inferInsert;
 
-export default async function CalendarView() {
-    let list = await GetByDate("2025-04-14");
-
-    async function refreshList() {
-        list = await GetByDate("2025-04-14");
-    }
-    async function insertEvent() {
-        var [{id}] = await Insert({ name: "test", date: "2025-04-14", time: "21:58" });
-        await refreshList();
-    }
+export default function CalendarView(
+    { selectedDate, eventList, onSelectedDatechanged }:
+        { selectedDate: string, eventList: Event[], onSelectedDatechanged: (d: string) => void }) {
     return <>
         <div>
-            Calendar View <button onClick={refreshList}>refresh</button> <button onClick={insertEvent}>insert</button>
-            {list.map((e: Event) => (
-                <div>{e.time}: {e.name}</div>
-            ))}
+            <DatePicker selectedDate={selectedDate} onChange={onSelectedDatechanged} />
+            <ul>
+                {eventList.map((e: Event) => (
+                    <li key={e.id}>{e.time}: {e.name}</li>
+                ))}
+            </ul>
         </div>
     </>
 }
