@@ -4,30 +4,36 @@ import { createClient } from "@libsql/client";
 import * as schema from '../db/schema';
 import * as dotenv from 'dotenv';
 import { eq } from "drizzle-orm/sqlite-core/expressions";
-type Event = typeof schema.events.$inferInsert;
+type EventEntry = typeof schema.events.$inferInsert;
 
-export async function GetByDate(datetime: string): Promise<Event[]> {
-    // TODO: Translate to local time
+export async function GetById(id: number): Promise<EventEntry> {
     const db = getClient();
-    return db.query.events.findMany({
-        where: eq(schema.events.start_date, datetime)
+    var res = await db.query.events.findFirst({
+        where: eq(schema.events.id, id)
     });
+    return res!;
 }
 
-export async function Upsert(model: Event): Promise<number> {
+export async function GetByDate(datetime: string): Promise<EventEntry[]> {
+    const db = getClient();
+    var results = await db.query.events.findMany({
+        where: eq(schema.events.start_date, datetime)
+    });
+    return results.sort((a, b) => (a.start_time < b.start_time ? 1 : -1));
+}
 
+export async function Upsert(model: EventEntry): Promise<number> {
+    console.log('upsert', JSON.stringify(model));
     const id: number = model.id as number;
-
-    // TODO: Store dates/times in UTC
+    console.log('upsert id', id);
 
     if (id !== undefined) {
-
         const db = getClient();
-        const [{ id }] = await db
+        const [{ newId }] = await db
             .insert(schema.events)
             .values(model)
-            .returning({ id: schema.events.id });
-        return id;
+            .returning({ newId: schema.events.id });
+        return newId;
     }
     else {
         const db = getClient();
@@ -56,6 +62,5 @@ export async function Delete(id: number) {
 function getClient() {
     dotenv.config();
     const client = createClient({ url: process.env.DATABASE_URL as string });
-    const db = drizzle({ client, schema });
-    return db;
+    return drizzle({ client, schema });
 }

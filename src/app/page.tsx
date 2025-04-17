@@ -1,9 +1,9 @@
-import EditEventForm from "@/ui/EditEventForm";
 import { GetByDate, Delete } from '@/lib/EventsRepo';
-import { EventEntry, getEmptyEventEntry } from '../db/schema';
+import { EventEntry } from '../db/schema';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
 import { getLocalTime, formatDateAsISO, formatTimeAsISO } from '@/lib/DateHelpers';
 import { redirect } from "next/navigation";
+import Link from 'next/link';
 
 export default async function Home({
   params,
@@ -17,6 +17,7 @@ export default async function Home({
   const qsDate = qs?.d as string;
   const selectedDate = qsDate ?? formatDateAsISO(getLocalTime());
   const eventList = await loadEventList(selectedDate);
+  console.log('events', JSON.stringify(eventList));
 
   async function onSelectedDateChanged(d: FormData) {
     'use server';
@@ -25,9 +26,7 @@ export default async function Home({
   }
 
   async function loadEventList(selectedDate: string) {
-    var latestList = await GetByDate(selectedDate);
-    latestList = latestList.sort((a, b) => (a.start_time < b.start_time ? 1 : -1));
-    return latestList;
+    return await GetByDate(selectedDate);
   }
 
   // async function populateEditForm(event?: EventEntry) {
@@ -79,17 +78,9 @@ export default async function Home({
       <h1>Calendar</h1>
 
       <Grid container spacing={2}>
-        {/* 
-        {isEditing && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <EditEventForm
-              eventToEdit={eventBeingEdited}
-              handleEventSubmit={saveEventHandler}
-              handleClose={closeFormEventHandler} />
-          </Grid>
-        )} */}
 
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12 }}>
+
           <form action={onSelectedDateChanged}>
             <Stack direction={'row'} spacing={1}>
               <label htmlFor="start_date">View date</label>
@@ -102,10 +93,10 @@ export default async function Home({
           </form>
 
           <Box>
-            {/* <Button variant="contained" onClick={async () => await populateEditForm()}>New</Button> */}
+            <Link href='/edit/new'>New</Link>
             <Divider />
             {eventList.map((e: EventEntry) => (
-              <Accordion key={e.id as number}>
+              <Accordion key={e.id!}>
                 <AccordionSummary>
                   <Chip label={e.start_time} color={"info"} />
                   <Typography sx={{ paddingLeft: 1, paddingTop: 0.5 }} component="span" fontWeight={'bold'}>
@@ -115,8 +106,8 @@ export default async function Home({
                 <AccordionDetails sx={{ background: '#efefef' }}>
                   <Typography padding={2}>{e.description}</Typography>
                   <Divider />
-                  {/* <Button onClick={() => populateEditForm(e)}>Edit</Button>
-                  <Button onClick={() => deleteEventHandler(e.id as number)}>Delete</Button> */}
+                  <Link href={`/edit/${e.id}`}>Edit</Link>
+                  {/* <Button onClick={() => deleteEventHandler(e.id as number)}>Delete</Button> */}
                 </AccordionDetails>
               </Accordion>
             ))}

@@ -1,11 +1,9 @@
 
 export function getLocalTime(addHours: number = 0): Date {
     var now = new Date(); // uses local time
-    console.debug('nd: ', now.toDateString());
     if (addHours > 0) {
         const hoursToAdd = addHours * 60 * 60 * 1000;
         now.setTime(now.getTime() + hoursToAdd);
-        console.debug('nd+: ', now.toDateString());
     }
     return now;
 }

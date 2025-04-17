@@ -17,8 +17,10 @@ export default function EditEventForm(p: EditEventFormParams) {
     const { id, name, description, start_date, start_time, end_date, end_time } = p.event;
 
     async function formSubmit(d: FormData) {
+        'use server';
+        const idStr = (d.get('id') as string);
         const model: EventEntry = {
-            id: +(d.get('id') as string),
+            id: (idStr?.length > 0 ? +idStr : undefined),
             name: d.get('name') as string,
             description: d.get('description') as string,
             start_date: d.get('start_date') as string,
@@ -41,17 +43,6 @@ export default function EditEventForm(p: EditEventFormParams) {
                         {id !== undefined && (<h2>Edit Event</h2>)}
                         <input type="hidden" value={id} />
                     </Grid>
-
-                    {/* 
-                    {errors.length > 0 && (
-                        <Grid size={12}>
-                            <ul>
-                                {errors.map((e: string) => (
-                                    <li key={e} className="warning-item">{e}</li>
-                                ))}
-                            </ul>
-                        </Grid>
-                    )} */}
 
                     <Grid size={12}>
                         <TextField fullWidth
@@ -84,7 +75,7 @@ export default function EditEventForm(p: EditEventFormParams) {
                         <Stack direction={'row'} spacing={1}>
                             <label htmlFor="start_time">Start time</label>
                             <input
-                                type="date"
+                                type="time"
                                 name="start_time"
                                 defaultValue={start_time} />
                         </Stack>
@@ -92,7 +83,7 @@ export default function EditEventForm(p: EditEventFormParams) {
 
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="end_date">Start date</label>
+                            <label htmlFor="end_date">End date</label>
                             <input
                                 type="date"
                                 name="end_date"
@@ -101,9 +92,9 @@ export default function EditEventForm(p: EditEventFormParams) {
                     </Grid>
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="end_time">Start time</label>
+                            <label htmlFor="end_time">End time</label>
                             <input
-                                type="date"
+                                type="time"
                                 name="end_time"
                                 defaultValue={end_time} />
                         </Stack>
