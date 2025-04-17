@@ -1,52 +1,48 @@
-'use client'
-import { useState } from 'react';
 import { EventEntry, validateEvent } from '@/db/schema';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
-import DatePicker from '@/ui/DatePicker';
-import TimePicker from './TimePicker';
+import Link from 'next/link';
+import { Upsert } from '@/lib/EventsRepo';
+import { redirect } from 'next/navigation';
+import Stack from '@mui/material/Stack';
 
-export type EditEventArgs = {
-    eventToEdit: EventEntry,
-    handleEventSubmit: (e: EventEntry) => void,
-    handleClose: () => void
-};
+type EditEventFormParams = {
+    event: EventEntry
+}
 
-export default function EditEventForm(p: EditEventArgs) {
-    let [event, setEvent] = useState<EventEntry>(p.eventToEdit);
-    let [errors, setErrors] = useState<string[]>([]);
+export default function EditEventForm(p: EditEventFormParams) {
 
-    function handleFieldChange(name: string, value: any) {
-        setEvent({ ...event, [name]: value });
-    }
+    const { id, name, description, start_date, start_time, end_date, end_time } = p.event;
 
-    function validateAndSubmitForm() {
-        var err = validateEvent(event);
-        if (err.length > 0) {
-            setErrors(err);
-        }
-        else {
-            p.handleEventSubmit(event);
-        }
+    async function formSubmit(d: FormData) {
+        const model: EventEntry = {
+            id: +(d.get('id') as string),
+            name: d.get('name') as string,
+            description: d.get('description') as string,
+            start_date: d.get('start_date') as string,
+            start_time: d.get('start_time') as string,
+            end_date: d.get('end_date') as string,
+            end_time: d.get('end_time') as string
+        };
+        await Upsert(model);
+
+        redirect('/');
     }
 
     return (
         <Paper elevation={2}>
-            <Box
-                component="form"
-                noValidate
-                autoComplete="off"
-                sx={{ padding: 4 }}>
+            <form action={formSubmit}>
                 <Grid container spacing={2}>
 
                     <Grid size={12}>
-                        {event.id === undefined && (<h2>New Event</h2>)}
-                        {event.id !== undefined && (<h2>Edit Event</h2>)}
+                        {id === undefined && (<h2>New Event</h2>)}
+                        {id !== undefined && (<h2>Edit Event</h2>)}
+                        <input type="hidden" value={id} />
                     </Grid>
 
+                    {/* 
                     {errors.length > 0 && (
                         <Grid size={12}>
                             <ul>
@@ -55,15 +51,14 @@ export default function EditEventForm(p: EditEventArgs) {
                                 ))}
                             </ul>
                         </Grid>
-                    )}
+                    )} */}
 
                     <Grid size={12}>
                         <TextField fullWidth
                             name="name"
                             label="Name"
                             variant="outlined"
-                            value={event.name}
-                            onChange={(e) => handleFieldChange(e.target.name, e.target.value)} />
+                            defaultValue={name} />
                     </Grid>
 
                     <Grid size={12}>
@@ -71,44 +66,54 @@ export default function EditEventForm(p: EditEventArgs) {
                             name="description"
                             label="Description"
                             variant="outlined"
-                            multiline={true} rows={5}
-                            value={event.description}
-                            onChange={(e) => handleFieldChange(e.target.name, e.target.value)} />
+                            multiline={true}
+                            rows={5}
+                            value={description} />
                     </Grid>
 
                     <Grid size={6}>
-                        <DatePicker
-                            label='Start date'
-                            selectedDate={event.start_date}
-                            onChange={(d) => handleFieldChange('start_date', d)}
-                        />
+                        <Stack direction={'row'} spacing={1}>
+                            <label htmlFor="start_date">Start date</label>
+                            <input
+                                type="date"
+                                name="start_date"
+                                defaultValue={start_date} />
+                        </Stack>
                     </Grid>
                     <Grid size={6}>
-                        <TimePicker
-                            label="Start time"
-                            selectedTime={event.start_time}
-                            onChange={(t) => handleFieldChange('start_time', t)} />
+                        <Stack direction={'row'} spacing={1}>
+                            <label htmlFor="start_time">Start time</label>
+                            <input
+                                type="date"
+                                name="start_time"
+                                defaultValue={start_time} />
+                        </Stack>
                     </Grid>
 
                     <Grid size={6}>
-                        <DatePicker
-                            label='End date'
-                            selectedDate={event.end_date}
-                            onChange={(d) => handleFieldChange('end_date', d)}
-                        />
+                        <Stack direction={'row'} spacing={1}>
+                            <label htmlFor="end_date">Start date</label>
+                            <input
+                                type="date"
+                                name="end_date"
+                                defaultValue={end_date} />
+                        </Stack>
                     </Grid>
                     <Grid size={6}>
-                        <TimePicker
-                            label="End time"
-                            selectedTime={event.end_time}
-                            onChange={(t) => handleFieldChange('end_time', t)} />
+                        <Stack direction={'row'} spacing={1}>
+                            <label htmlFor="end_time">Start time</label>
+                            <input
+                                type="date"
+                                name="end_time"
+                                defaultValue={end_time} />
+                        </Stack>
                     </Grid>
 
                     <Grid size={12} textAlign={'end'}>
-                        <Button variant="contained" onClick={() => validateAndSubmitForm()}>Save</Button>&nbsp;
-                        <Button variant="outlined" onClick={() => p.handleClose()}>Close</Button>
+                        <Button type="submit" variant="contained">Save</Button>&nbsp;
+                        <Link href="/">Close</Link>
                     </Grid>
                 </Grid>
-            </Box>
+            </form>
         </Paper>)
 }

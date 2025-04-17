@@ -14,31 +14,41 @@ export async function GetByDate(datetime: string): Promise<Event[]> {
     });
 }
 
-export async function Insert(model: Event) {
-    // TODO: Store in UTC
-    const db = getClient();
-    return db.insert(schema.events).values(model).returning({ id: schema.events.id });
-}
+export async function Upsert(model: Event): Promise<number> {
 
-export async function Update(model: Event) {
-    // TODO: Store in UTC
-    const db = getClient();
-    return db
-        .update(schema.events)
-        .set({ 
-            name: model.name, 
-            description: model.description,
-            start_date: model.start_date,
-            start_time: model.start_time,
-            end_date: model.end_date,
-            end_time: model.end_time
-        })
-        .where(eq(schema.events.id, model.id as number));
+    const id: number = model.id as number;
+
+    // TODO: Store dates/times in UTC
+
+    if (id !== undefined) {
+
+        const db = getClient();
+        const [{ id }] = await db
+            .insert(schema.events)
+            .values(model)
+            .returning({ id: schema.events.id });
+        return id;
+    }
+    else {
+        const db = getClient();
+        await db
+            .update(schema.events)
+            .set({
+                name: model.name,
+                description: model.description,
+                start_date: model.start_date,
+                start_time: model.start_time,
+                end_date: model.end_date,
+                end_time: model.end_time
+            })
+            .where(eq(schema.events.id, id));
+        return id;
+    }
 }
 
 export async function Delete(id: number) {
     const db = getClient();
-    return db
+    return await db
         .delete(schema.events)
         .where(eq(schema.events.id, id));
 }
