@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
 import * as schema from '../db/schema';
 import * as dotenv from 'dotenv';
-import { eq } from "drizzle-orm/sqlite-core/expressions";
+import { and, eq, gt, not } from "drizzle-orm/sqlite-core/expressions";
 type EventEntry = typeof schema.events.$inferInsert;
 
 export async function GetById(id: number): Promise<EventEntry> {
@@ -17,25 +17,27 @@ export async function GetById(id: number): Promise<EventEntry> {
 export async function GetByDate(datetime: string): Promise<EventEntry[]> {
     const db = getClient();
     var results = await db.query.events.findMany({
-        where: eq(schema.events.start_date, datetime)
+        where: and(gt(schema.events.id, 0), eq(schema.events.start_date, datetime))
     });
     return results.sort((a, b) => (a.start_time < b.start_time ? 1 : -1));
 }
 
 export async function Upsert(model: EventEntry): Promise<number> {
     console.log('upsert', JSON.stringify(model));
-    const id: number = model.id as number;
-    console.log('upsert id', id);
+    const idParam: number = model.id as number;
+    console.log('upsert id', idParam);
 
-    if (id !== undefined) {
+    if (idParam === undefined) {
+        console.log('inserting', idParam);
         const db = getClient();
-        const [{ newId }] = await db
+        const [{ id }] = await db
             .insert(schema.events)
             .values(model)
-            .returning({ newId: schema.events.id });
-        return newId;
+            .returning()
+        return id;
     }
     else {
+        console.log('updating', idParam);
         const db = getClient();
         await db
             .update(schema.events)
@@ -47,12 +49,13 @@ export async function Upsert(model: EventEntry): Promise<number> {
                 end_date: model.end_date,
                 end_time: model.end_time
             })
-            .where(eq(schema.events.id, id));
-        return id;
+            .where(eq(schema.events.id, idParam));
+        return idParam;
     }
 }
 
 export async function Delete(id: number) {
+    console.log('deleting', id);
     const db = getClient();
     return await db
         .delete(schema.events)

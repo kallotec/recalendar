@@ -41,7 +41,7 @@ export default function EditEventForm(p: EditEventFormParams) {
                     <Grid size={12}>
                         {id === undefined && (<h2>New Event</h2>)}
                         {id !== undefined && (<h2>Edit Event</h2>)}
-                        <input type="hidden" value={id} />
+                        <input type="hidden" name="id" defaultValue={id} />
                     </Grid>
 
                     <Grid size={12}>
@@ -59,7 +59,7 @@ export default function EditEventForm(p: EditEventFormParams) {
                             variant="outlined"
                             multiline={true}
                             rows={5}
-                            value={description} />
+                            defaultValue={description} />
                     </Grid>
 
                     <Grid size={6}>

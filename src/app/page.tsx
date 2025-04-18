@@ -4,6 +4,7 @@ import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Chip, Divid
 import { getLocalTime, formatDateAsISO, formatTimeAsISO } from '@/lib/DateHelpers';
 import { redirect } from "next/navigation";
 import Link from 'next/link';
+import { revalidatePath } from 'next/cache';
 
 export default async function Home({
   params,
@@ -17,7 +18,10 @@ export default async function Home({
   const qsDate = qs?.d as string;
   const selectedDate = qsDate ?? formatDateAsISO(getLocalTime());
   const eventList = await loadEventList(selectedDate);
-  console.log('events', JSON.stringify(eventList));
+
+  async function loadEventList(selectedDate: string) {
+    return await GetByDate(selectedDate);
+  }
 
   async function onSelectedDateChanged(d: FormData) {
     'use server';
@@ -25,53 +29,12 @@ export default async function Home({
     redirect(`/?d=${date}`);
   }
 
-  async function loadEventList(selectedDate: string) {
-    return await GetByDate(selectedDate);
+  async function onDeleteClicked(d: FormData) {
+    'use server';
+    var id: number = +(d.get('id') as string);
+    await Delete(id);
+    revalidatePath('/');
   }
-
-  // async function populateEditForm(event?: EventEntry) {
-  //   if (event === undefined) {
-  //     const newEvent = getEmptyEventEntry();
-  //     var nowIn1Hour = getLocalTime(1);
-  //     var nowIn2Hours = getLocalTime(2);
-  //     newEvent.start_date = formatDateAsISO(nowIn1Hour);
-  //     newEvent.start_time = formatTimeAsISO(nowIn1Hour, true);
-  //     newEvent.end_date = formatDateAsISO(nowIn2Hours);
-  //     newEvent.end_time = formatTimeAsISO(nowIn2Hours, true);
-  //     console.debug(JSON.stringify(newEvent));
-  //     setEventBeingEdited(newEvent);
-  //   }
-  //   else {
-  //     setEventBeingEdited(event);
-  //   }
-  //   setIsEditing(true);
-  // }
-
-  // async function saveEventHandler(e: EventEntry) {
-  //   if (e.id === undefined) {
-  //     const [{ id }] = await Insert(e);
-  //   }
-  //   else {
-  //     await Update(e);
-  //   }
-
-  //   closeFormEventHandler();
-
-  //   // TODO: Just update the cached item, don't reload whole list
-  //   await onNewDateSelected(selectedDate);
-  // }
-
-  // async function deleteEventHandler(id: number) {
-  //   await Delete(id);
-  //   // TODO: Just remove the cached item, don't reload whole list
-  //   await onNewDateSelected(selectedDate);
-  // }
-
-  // function closeFormEventHandler() {
-  //   const newEvent = getEmptyEventEntry();
-  //   setEventBeingEdited(newEvent); // stop binding to the last element
-  //   setIsEditing(false);
-  // }
 
   return (
     <main>
@@ -88,12 +51,12 @@ export default async function Home({
                 type="date"
                 name="selected_date"
                 defaultValue={selectedDate} />
+              <Button type="submit">Load</Button>
             </Stack>
-            <Button type="submit">Load</Button>
           </form>
 
           <Box>
-            <Link href='/edit/new'>New</Link>
+            <Link href={'/edit/new'}>New</Link>
             <Divider />
             {eventList.map((e: EventEntry) => (
               <Accordion key={e.id!}>
@@ -107,11 +70,15 @@ export default async function Home({
                   <Typography padding={2}>{e.description}</Typography>
                   <Divider />
                   <Link href={`/edit/${e.id}`}>Edit</Link>
-                  {/* <Button onClick={() => deleteEventHandler(e.id as number)}>Delete</Button> */}
+                  <form action={onDeleteClicked}>
+                    <input type="hidden" name="id" defaultValue={e.id} />
+                    <Button type="submit">Delete</Button>
+                  </form>
                 </AccordionDetails>
               </Accordion>
             ))}
           </Box>
+
         </Grid>
 
       </Grid>
