@@ -46,7 +46,7 @@ export default async function Home({
 
           <form action={onSelectedDateChanged}>
             <Stack direction={'row'} spacing={1}>
-              <label htmlFor="start_date">View date</label>
+              <label htmlFor="selected_date">View date</label>
               <input
                 type="date"
                 name="selected_date"
@@ -61,7 +61,7 @@ export default async function Home({
             {eventList.map((e: EventEntry) => (
               <Accordion key={e.id!}>
                 <AccordionSummary>
-                  <Chip label={e.start_time} color={"info"} />
+                  <Chip label={e.start_time_utc} color={"info"} />
                   <Typography sx={{ paddingLeft: 1, paddingTop: 0.5 }} component="span" fontWeight={'bold'}>
                     {e.name}
                   </Typography>

@@ -14,7 +14,7 @@ type EditEventFormParams = {
 
 export default function EditEventForm(p: EditEventFormParams) {
 
-    const { id, name, description, start_date, start_time, end_date, end_time } = p.event;
+    const { id, name, description, start_date_utc, start_time_utc, end_date_utc, end_time_utc } = p.event;
 
     async function formSubmit(d: FormData) {
         'use server';
@@ -23,10 +23,10 @@ export default function EditEventForm(p: EditEventFormParams) {
             id: (idStr?.length > 0 ? +idStr : undefined),
             name: d.get('name') as string,
             description: d.get('description') as string,
-            start_date: d.get('start_date') as string,
-            start_time: d.get('start_time') as string,
-            end_date: d.get('end_date') as string,
-            end_time: d.get('end_time') as string
+            start_date_utc: d.get('start_date_utc') as string,
+            start_time_utc: d.get('start_time_utc') as string,
+            end_date_utc: d.get('end_date_utc') as string,
+            end_time_utc: d.get('end_time_utc') as string
         };
         await Upsert(model);
 
@@ -64,39 +64,39 @@ export default function EditEventForm(p: EditEventFormParams) {
 
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="start_date">Start date</label>
+                            <label htmlFor="start_date_utc">Start date</label>
                             <input
                                 type="date"
-                                name="start_date"
-                                defaultValue={start_date} />
+                                name="start_date_utc"
+                                defaultValue={start_date_utc} />
                         </Stack>
                     </Grid>
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="start_time">Start time</label>
+                            <label htmlFor="start_time_utc">Start time</label>
                             <input
                                 type="time"
-                                name="start_time"
-                                defaultValue={start_time} />
+                                name="start_time_utc"
+                                defaultValue={start_time_utc} />
                         </Stack>
                     </Grid>
 
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="end_date">End date</label>
+                            <label htmlFor="end_date_utc">End date</label>
                             <input
                                 type="date"
-                                name="end_date"
-                                defaultValue={end_date} />
+                                name="end_date_utc"
+                                defaultValue={end_date_utc} />
                         </Stack>
                     </Grid>
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="end_time">End time</label>
+                            <label htmlFor="end_time_utc">End time</label>
                             <input
                                 type="time"
-                                name="end_time"
-                                defaultValue={end_time} />
+                                name="end_time_utc"
+                                defaultValue={end_time_utc} />
                         </Stack>
                     </Grid>
 

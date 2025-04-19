@@ -17,9 +17,9 @@ export async function GetById(id: number): Promise<EventEntry> {
 export async function GetByDate(datetime: string): Promise<EventEntry[]> {
     const db = getClient();
     var results = await db.query.events.findMany({
-        where: and(gt(schema.events.id, 0), eq(schema.events.start_date, datetime))
+        where: and(gt(schema.events.id, 0), eq(schema.events.start_date_utc, datetime))
     });
-    return results.sort((a, b) => (a.start_time < b.start_time ? 1 : -1));
+    return results.sort((a, b) => (a.start_time_utc < b.start_time_utc ? 1 : -1));
 }
 
 export async function Upsert(model: EventEntry): Promise<number> {
@@ -44,10 +44,10 @@ export async function Upsert(model: EventEntry): Promise<number> {
             .set({
                 name: model.name,
                 description: model.description,
-                start_date: model.start_date,
-                start_time: model.start_time,
-                end_date: model.end_date,
-                end_time: model.end_time
+                start_date_utc: model.start_date_utc,
+                start_time_utc: model.start_time_utc,
+                end_date_utc: model.end_date_utc,
+                end_time_utc: model.end_time_utc
             })
             .where(eq(schema.events.id, idParam));
         return idParam;
