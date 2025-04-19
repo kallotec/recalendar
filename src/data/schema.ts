@@ -1,5 +1,5 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { getLocalTime, formatDateAsISO, formatTimeAsISO } from '@/lib/dateConversion';
+import { getLocalTime, formatDateAsISO, formatTimeAsISO, convertLocalToUtc } from '@/lib/dateConversion';
 import { EventEntry } from "@/lib/models";
 
 export const events = sqliteTable("events", {
@@ -63,8 +63,22 @@ export function mapToDbSchema(event: EventEntry) {
   if (event === undefined || event === null) {
     return undefined;
   }
-  var row: EventSchema = {
 
+  var utcStartDateTime = convertLocalToUtc(event.start_date_local, event.start_time_local);
+  var utcStartDate = utcStartDateTime.split(" ")[0];
+  var utcStartTime = utcStartDateTime.split(" ")[1];
+  var utcEndDateTime = convertLocalToUtc(event.end_date_local, event.end_time_local);
+  var utcEndDate = utcEndDateTime.split(" ")[0];
+  var utcEndTime = utcEndDateTime.split(" ")[1];
+
+  var row: EventSchema = {
+    id: event.id,
+    name: event.name,
+    description: event.description,
+    start_date_utc: utcStartDate,
+    start_time_utc: utcStartTime,
+    end_date_utc: utcEndDate,
+    end_time_utc: utcEndTime,
   };
   return row;
 }
@@ -73,8 +87,22 @@ export function mapToModel(event: EventSchema) {
   if (event === undefined || event === null) {
     return undefined;
   }
-  var model: EventEntry = {
 
+  var localStartDateTime = convertLocalToUtc(event.start_date_utc, event.start_time_utc);
+  var localStartDate = localStartDateTime.split(" ")[0];
+  var localStartTime = localStartDateTime.split(" ")[1];
+  var localEndDateTime = convertLocalToUtc(event.end_date_utc, event.end_time_utc);
+  var localEndDate = localEndDateTime.split(" ")[0];
+  var localEndTime = localEndDateTime.split(" ")[1];
+
+  var model: EventEntry = {
+    id: event.id,
+    name: event.name,
+    description: event.description ?? undefined,
+    start_date_local: localStartDate,
+    start_time_local: localStartTime,
+    end_date_local: localEndDate,
+    end_time_local: localEndTime,
   };
   return model;
 }
