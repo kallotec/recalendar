@@ -1,6 +1,7 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { getLocalTime, formatDateAsISO, formatTimeAsISO, convertLocalToUtc } from '@/lib/dateConversion';
+import { getLocalTime, formatDateAsISO, formatTimeAsISO, convertLocalToUtc, convertUtcToLocal } from '@/lib/dateConversion';
 import { EventEntry } from "@/lib/models";
+import { bigint } from "drizzle-orm/mysql-core";
 
 export const events = sqliteTable("events", {
   id: integer().primaryKey(),
@@ -10,6 +11,8 @@ export const events = sqliteTable("events", {
   start_time_utc: text().notNull(),
   end_date_utc: text().notNull(),
   end_time_utc: text().notNull(),
+  // start_time_ms_utc: text().notNull() // this would be bigint but SQLITE doesn't have a bigint type, and we can still sort on text well enough
+  // end_time_ms_utc: text().notNull() // this would be bigint but SQLITE doesn't have a bigint type, and we can still sort on text well enough
 });
 
 export type EventSchema = typeof events.$inferInsert;
@@ -63,6 +66,7 @@ export function mapToDbSchema(event: EventEntry) {
   if (event === undefined || event === null) {
     return undefined;
   }
+  console.debug('mapToDbSchema', JSON.stringify(event));
 
   var utcStartDateTime = convertLocalToUtc(event.start_date_local, event.start_time_local);
   var utcStartDate = utcStartDateTime.split(" ")[0];
@@ -80,6 +84,7 @@ export function mapToDbSchema(event: EventEntry) {
     end_date_utc: utcEndDate,
     end_time_utc: utcEndTime,
   };
+  console.debug('row', JSON.stringify(row));
   return row;
 }
 
@@ -87,11 +92,12 @@ export function mapToModel(event: EventSchema) {
   if (event === undefined || event === null) {
     return undefined;
   }
+  console.debug('mapToModel', JSON.stringify(event));
 
-  var localStartDateTime = convertLocalToUtc(event.start_date_utc, event.start_time_utc);
+  var localStartDateTime = convertUtcToLocal(event.start_date_utc, event.start_time_utc);
   var localStartDate = localStartDateTime.split(" ")[0];
   var localStartTime = localStartDateTime.split(" ")[1];
-  var localEndDateTime = convertLocalToUtc(event.end_date_utc, event.end_time_utc);
+  var localEndDateTime = convertUtcToLocal(event.end_date_utc, event.end_time_utc);
   var localEndDate = localEndDateTime.split(" ")[0];
   var localEndTime = localEndDateTime.split(" ")[1];
 
@@ -104,5 +110,6 @@ export function mapToModel(event: EventSchema) {
     end_date_local: localEndDate,
     end_time_local: localEndTime,
   };
+  console.debug('model', JSON.stringify(model));
   return model;
 }

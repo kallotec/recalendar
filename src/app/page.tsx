@@ -1,10 +1,10 @@
 import { GetByDate, Delete } from '@/data/eventsRepo';
-import { EventEntry } from '../data/schema';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
 import { getLocalTime, formatDateAsISO, formatTimeAsISO } from '@/lib/dateConversion';
 import { redirect } from "next/navigation";
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
+import { EventEntry } from '@/lib/models';
 
 export default async function Home({
   params,
@@ -61,7 +61,7 @@ export default async function Home({
             {eventList.map((e: EventEntry) => (
               <Accordion key={e.id!}>
                 <AccordionSummary>
-                  <Chip label={e.start_time_utc} color={"info"} />
+                  <Chip label={e.start_time_local} color={"info"} />
                   <Typography sx={{ paddingLeft: 1, paddingTop: 0.5 }} component="span" fontWeight={'bold'}>
                     {e.name}
                   </Typography>

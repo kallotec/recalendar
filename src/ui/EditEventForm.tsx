@@ -18,6 +18,7 @@ export default function EditEventForm(p: EditEventFormParams) {
 
     async function formSubmit(d: FormData) {
         'use server';
+        console.debug('formSubmit', JSON.stringify(d));
         const idStr = (d.get('id') as string);
         const model: EventEntry = {
             id: (idStr?.length > 0 ? +idStr : undefined),
