@@ -18,7 +18,7 @@ export default async function Home({
   const qs = await searchParams;
   const qsDate = qs?.d as string;
   const qsTimezone = qs?.tz as string;
-  const eventList = await loadEventList(qsDate, qsTimezone);
+  const eventList = (qsDate?.length > 0) ? await loadEventList(qsDate, qsTimezone) : [];
 
   async function loadEventList(dateLocalIso: string, timezone:string) {
     const { startMs, endMs } = getStartAndEndOfDayInMsUtc(dateLocalIso, timezone);
@@ -52,7 +52,7 @@ export default async function Home({
               <input
                 type="date"
                 name="selected_date"
-                defaultValue={selectedDate} />
+                defaultValue={qsDate} />
               <Button type="submit">Load</Button>
             </Stack>
           </form>

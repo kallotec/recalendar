@@ -4,7 +4,7 @@ dotenv.config();
 
 export default defineConfig({
     dialect: "sqlite",
-    schema: "./src/db/schema.ts",
+    schema: "./src/data/schema.ts",
     out: "./migrations",
     dbCredentials: {
         url: process.env.DATABASE_URL as string
