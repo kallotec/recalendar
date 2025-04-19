@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
 import * as schema from '../db/schema';
 import * as dotenv from 'dotenv';
-import { and, eq, gt, not } from "drizzle-orm/sqlite-core/expressions";
+import { and, eq, gt } from "drizzle-orm/sqlite-core/expressions";
 type EventEntry = typeof schema.events.$inferInsert;
 
 export async function GetById(id: number): Promise<EventEntry> {
