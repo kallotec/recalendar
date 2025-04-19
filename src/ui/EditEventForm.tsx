@@ -1,10 +1,10 @@
-import { EventEntry, validateEvent } from '@/db/schema';
+import { EventEntry } from '@/lib/models';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Link from 'next/link';
-import { Upsert } from '@/lib/EventsRepo';
+import { Upsert } from '@/data/eventsRepo';
 import { redirect } from 'next/navigation';
 import Stack from '@mui/material/Stack';
 
@@ -14,7 +14,7 @@ type EditEventFormParams = {
 
 export default function EditEventForm(p: EditEventFormParams) {
 
-    const { id, name, description, start_date_utc, start_time_utc, end_date_utc, end_time_utc } = p.event;
+    const { id, name, description, start_date_local, start_time_local, end_date_local, end_time_local } = p.event;
 
     async function formSubmit(d: FormData) {
         'use server';
@@ -23,10 +23,10 @@ export default function EditEventForm(p: EditEventFormParams) {
             id: (idStr?.length > 0 ? +idStr : undefined),
             name: d.get('name') as string,
             description: d.get('description') as string,
-            start_date_utc: d.get('start_date_utc') as string,
-            start_time_utc: d.get('start_time_utc') as string,
-            end_date_utc: d.get('end_date_utc') as string,
-            end_time_utc: d.get('end_time_utc') as string
+            start_date_local: d.get('start_date_local') as string,
+            start_time_local: d.get('start_time_local') as string,
+            end_date_local: d.get('end_date_local') as string,
+            end_time_local: d.get('end_time_local') as string
         };
         await Upsert(model);
 
@@ -64,39 +64,39 @@ export default function EditEventForm(p: EditEventFormParams) {
 
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="start_date_utc">Start date</label>
+                            <label htmlFor="start_date_local">Start date</label>
                             <input
                                 type="date"
-                                name="start_date_utc"
-                                defaultValue={start_date_utc} />
+                                name="start_date_local"
+                                defaultValue={start_date_local} />
                         </Stack>
                     </Grid>
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="start_time_utc">Start time</label>
+                            <label htmlFor="start_time_local">Start time</label>
                             <input
                                 type="time"
-                                name="start_time_utc"
-                                defaultValue={start_time_utc} />
+                                name="start_time_local"
+                                defaultValue={start_time_local} />
                         </Stack>
                     </Grid>
 
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="end_date_utc">End date</label>
+                            <label htmlFor="end_date_local">End date</label>
                             <input
                                 type="date"
-                                name="end_date_utc"
-                                defaultValue={end_date_utc} />
+                                name="end_date_local"
+                                defaultValue={end_date_local} />
                         </Stack>
                     </Grid>
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="end_time_utc">End time</label>
+                            <label htmlFor="end_time_local">End time</label>
                             <input
                                 type="time"
-                                name="end_time_utc"
-                                defaultValue={end_time_utc} />
+                                name="end_time_local"
+                                defaultValue={end_time_local} />
                         </Stack>
                     </Grid>
 

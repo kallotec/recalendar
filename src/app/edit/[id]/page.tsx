@@ -1,6 +1,6 @@
 import EditEventForm from "@/ui/EditEventForm";
-import { GetByDate, Delete, GetById } from '@/lib/EventsRepo';
-import { EventEntry, generateNewEventEntry } from '@/db/schema';
+import { GetByDate, Delete, GetById } from '@/data/eventsRepo';
+import { EventEntry, generateNewEventEntry } from '@/data/schema';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
 import { redirect } from "next/navigation";
 

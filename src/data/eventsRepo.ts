@@ -1,53 +1,56 @@
 'use server'
 import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
-import * as schema from '../db/schema';
+import * as schema from './schema';
 import * as dotenv from 'dotenv';
 import { and, eq, gt } from "drizzle-orm/sqlite-core/expressions";
-type EventEntry = typeof schema.events.$inferInsert;
+import { EventEntry } from "../lib/models";
+import assert from "node:assert";
 
 export async function GetById(id: number): Promise<EventEntry> {
+    assert(id > 0, "id arg not specified");
     const db = getClient();
     var res = await db.query.events.findFirst({
         where: eq(schema.events.id, id)
     });
-    return res!;
+    return schema.mapToModel(res!)!;
 }
 
 export async function GetByDate(datetime: string): Promise<EventEntry[]> {
+    assert(datetime?.length > 0, "datetime arg not specified");
     const db = getClient();
     var results = await db.query.events.findMany({
         where: and(gt(schema.events.id, 0), eq(schema.events.start_date_utc, datetime))
     });
-    return results.sort((a, b) => (a.start_time_utc < b.start_time_utc ? 1 : -1));
+    return results!
+        .sort((a, b) => (a.start_time_utc < b.start_time_utc ? 1 : -1))
+        .map((e: schema.EventSchema) => schema.mapToModel(e)!);
 }
 
 export async function Upsert(model: EventEntry): Promise<number> {
-    console.log('upsert', JSON.stringify(model));
+    assert(model, "model arg not specified");
     const idParam: number = model.id as number;
-    console.log('upsert id', idParam);
+    const row = schema.mapToDbSchema(model)!;
 
     if (idParam === undefined) {
-        console.log('inserting', idParam);
         const db = getClient();
         const [{ id }] = await db
             .insert(schema.events)
-            .values(model)
+            .values(row)
             .returning()
         return id;
     }
     else {
-        console.log('updating', idParam);
         const db = getClient();
         await db
             .update(schema.events)
             .set({
-                name: model.name,
-                description: model.description,
-                start_date_utc: model.start_date_utc,
-                start_time_utc: model.start_time_utc,
-                end_date_utc: model.end_date_utc,
-                end_time_utc: model.end_time_utc
+                name: row.name,
+                description: row.description,
+                start_date_utc: row.start_date_utc,
+                start_time_utc: row.start_time_utc,
+                end_date_utc: row.end_date_utc,
+                end_time_utc: row.end_time_utc
             })
             .where(eq(schema.events.id, idParam));
         return idParam;
@@ -55,7 +58,7 @@ export async function Upsert(model: EventEntry): Promise<number> {
 }
 
 export async function Delete(id: number) {
-    console.log('deleting', id);
+    assert(id, "id not specified");
     const db = getClient();
     return await db
         .delete(schema.events)
@@ -64,6 +67,8 @@ export async function Delete(id: number) {
 
 function getClient() {
     dotenv.config();
-    const client = createClient({ url: process.env.DATABASE_URL as string });
+    const dbUrl = process.env.DATABASE_URL as string;
+    assert(dbUrl?.length > 0, "db url not set");
+    const client = createClient({ url: dbUrl });
     return drizzle({ client, schema });
 }
