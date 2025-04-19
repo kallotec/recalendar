@@ -1,8 +1,7 @@
 import EditEventForm from "@/ui/EditEventForm";
-import { GetByDate, Delete, GetById } from '@/data/eventsRepo';
-import { EventEntry, generateNewEventEntry } from '@/data/schema';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
-import { redirect } from "next/navigation";
+import { GetById } from '@/data/eventsRepo';
+import { generateNewEventEntry, timezoneLocalNZ } from '@/data/schema';
+import { Grid } from "@mui/material";
 
 export default async function EditEventPage({
   params,
@@ -14,7 +13,9 @@ export default async function EditEventPage({
 
   const { id } = await params
   const isNewEntry = id == 'new';
-  const model = (isNewEntry ? generateNewEventEntry(true) : await GetById(+id));
+  const model = (isNewEntry 
+    ? generateNewEventEntry(timezoneLocalNZ) // TODO: pull this from the client
+    : await GetById(+id));
 
   return (
     <main>

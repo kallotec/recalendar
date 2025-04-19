@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
 import * as schema from './schema';
 import * as dotenv from 'dotenv';
-import { and, eq, gt } from "drizzle-orm/sqlite-core/expressions";
+import { and, eq, gt, lt } from "drizzle-orm/sqlite-core/expressions";
 import { EventEntry } from "../lib/models";
 import assert from "node:assert";
 
@@ -16,14 +16,13 @@ export async function GetById(id: number): Promise<EventEntry> {
     return schema.mapToModel(res!)!;
 }
 
-export async function GetByDate(datetime: string): Promise<EventEntry[]> {
-    assert(datetime?.length > 0, "datetime arg not specified");
+export async function GetByDate(utcStartInMs: number, utcEndInMs: number): Promise<EventEntry[]> {
     const db = getClient();
     var results = await db.query.events.findMany({
-        where: and(gt(schema.events.id, 0), eq(schema.events.start_date_utc, datetime))
+        where: and(gt(schema.events.start_datetime_utc, utcStartInMs.toString()), lt(schema.events.start_datetime_utc, utcEndInMs.toString()))
     });
     return results!
-        .sort((a, b) => (a.start_time_utc < b.start_time_utc ? 1 : -1))
+        .sort((a, b) => (a.start_datetime_utc < b.end_datetime_utc ? 1 : -1))
         .map((e: schema.EventSchema) => schema.mapToModel(e)!);
 }
 
@@ -47,10 +46,9 @@ export async function Upsert(model: EventEntry): Promise<number> {
             .set({
                 name: row.name,
                 description: row.description,
-                start_date_utc: row.start_date_utc,
-                start_time_utc: row.start_time_utc,
-                end_date_utc: row.end_date_utc,
-                end_time_utc: row.end_time_utc
+                timezone: row.timezone,
+                start_datetime_utc: row.start_datetime_utc,
+                end_datetime_utc: row.end_datetime_utc
             })
             .where(eq(schema.events.id, idParam));
         return idParam;

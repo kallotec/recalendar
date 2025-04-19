@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Upsert } from '@/data/eventsRepo';
 import { redirect } from 'next/navigation';
 import Stack from '@mui/material/Stack';
+import { parseIsoLocalDateAndTime } from '@/lib/dateConversion';
 
 type EditEventFormParams = {
     event: EventEntry
@@ -14,20 +15,30 @@ type EditEventFormParams = {
 
 export default function EditEventForm(p: EditEventFormParams) {
 
-    const { id, name, description, start_date_local, start_time_local, end_date_local, end_time_local } = p.event;
+    const { id, name, description, timezone, startDateTime: start_datetime, endDateTime: end_datetime } = p.event;
+    const startDateIso: string = start_datetime.toISODate()!;
+    const startTimeIso: string = start_datetime.toISOTime()!;
+    const endDateIso: string = end_datetime.toISODate()!;
+    const endTimeIso: string = end_datetime.toISOTime()!;
 
     async function formSubmit(d: FormData) {
         'use server';
         console.debug('formSubmit', JSON.stringify(d));
         const idStr = (d.get('id') as string);
+        const tz = d.get('timezone') as string;
         const model: EventEntry = {
             id: (idStr?.length > 0 ? +idStr : undefined),
             name: d.get('name') as string,
             description: d.get('description') as string,
-            start_date_local: d.get('start_date_local') as string,
-            start_time_local: d.get('start_time_local') as string,
-            end_date_local: d.get('end_date_local') as string,
-            end_time_local: d.get('end_time_local') as string
+            timezone: tz,
+            startDateTime: parseIsoLocalDateAndTime(
+                d.get('startDateIso') as string,
+                d.get('startTimeIso') as string,
+                tz),
+            endDateTime: parseIsoLocalDateAndTime(
+                d.get('endDateIso') as string,
+                d.get('endTimeIso') as string,
+                tz)
         };
         await Upsert(model);
 
@@ -43,6 +54,7 @@ export default function EditEventForm(p: EditEventFormParams) {
                         {id === undefined && (<h2>New Event</h2>)}
                         {id !== undefined && (<h2>Edit Event</h2>)}
                         <input type="hidden" name="id" defaultValue={id} />
+                        <input type="hidden" name="timezone" defaultValue={timezone} />
                     </Grid>
 
                     <Grid size={12}>
@@ -65,39 +77,39 @@ export default function EditEventForm(p: EditEventFormParams) {
 
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="start_date_local">Start date</label>
+                            <label htmlFor="startTimeIso">Start date</label>
                             <input
                                 type="date"
-                                name="start_date_local"
-                                defaultValue={start_date_local} />
+                                name="startTimeIso"
+                                defaultValue={startTimeIso} />
                         </Stack>
                     </Grid>
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="start_time_local">Start time</label>
+                            <label htmlFor="startTimeIso">Start time</label>
                             <input
                                 type="time"
-                                name="start_time_local"
-                                defaultValue={start_time_local} />
+                                name="startTimeIso"
+                                defaultValue={startTimeIso} />
                         </Stack>
                     </Grid>
 
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="end_date_local">End date</label>
+                            <label htmlFor="endDateIso">End date</label>
                             <input
                                 type="date"
-                                name="end_date_local"
-                                defaultValue={end_date_local} />
+                                name="endDateIso"
+                                defaultValue={endDateIso} />
                         </Stack>
                     </Grid>
                     <Grid size={6}>
                         <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="end_time_local">End time</label>
+                            <label htmlFor="endTimeIso">End time</label>
                             <input
                                 type="time"
-                                name="end_time_local"
-                                defaultValue={end_time_local} />
+                                name="endTimeIso"
+                                defaultValue={endTimeIso} />
                         </Stack>
                     </Grid>
 

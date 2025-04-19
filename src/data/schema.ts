@@ -1,18 +1,19 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { getLocalTime, formatDateAsISO, formatTimeAsISO, convertLocalToUtc, convertUtcToLocal } from '@/lib/dateConversion';
+import { getLocalTime } from '@/lib/dateConversion';
 import { EventEntry } from "@/lib/models";
-import { bigint } from "drizzle-orm/mysql-core";
+import { DateTime } from "luxon";
+import assert from "node:assert";
+
+export const timezoneLocalNZ = 'Pacific/Auckland';
+const timezoneUtc: string = 'utc';
 
 export const events = sqliteTable("events", {
   id: integer().primaryKey(),
   name: text().notNull(),
   description: text(),
-  start_date_utc: text().notNull(), // store date separate string component, as we will commonly query for events on a particular date
-  start_time_utc: text().notNull(),
-  end_date_utc: text().notNull(),
-  end_time_utc: text().notNull(),
-  // start_time_ms_utc: text().notNull() // this would be bigint but SQLITE doesn't have a bigint type, and we can still sort on text well enough
-  // end_time_ms_utc: text().notNull() // this would be bigint but SQLITE doesn't have a bigint type, and we can still sort on text well enough
+  timezone: text().notNull(),
+  start_datetime_utc: text().notNull(), // this would be bigint but SQLITE doesn't have a bigint type, and we can still sort on text well enough
+  end_datetime_utc: text().notNull() // this would be bigint but SQLITE doesn't have a bigint type, and we can still sort on text well enough
 });
 
 export type EventSchema = typeof events.$inferInsert;
@@ -25,91 +26,65 @@ export function validateEvent(event: EventEntry): string[] {
     errors.push('Name is a required field');
   }
 
-  var startEndDateValid = (event.start_date_local <= event.end_date_local); // works due to ISO string format
+  var startEndDateValid = (event.startDateTime <= event.endDateTime); // works due to ISO string format
   if (!startEndDateValid) {
     errors.push('Start Date must be before End Date');
-  }
-
-  var endTimeBeforeStartTime = (event.start_date_local == event.end_date_local && event.start_time_local > event.end_time_local)
-  if (endTimeBeforeStartTime) {
-    errors.push('Start Time must be before End Time');
   }
 
   return errors;
 }
 
-export function generateNewEventEntry(prepopulate: boolean): EventEntry {
+export function generateNewEventEntry(timezone: string): EventEntry {
 
   const newEvent: EventEntry = {
     id: undefined,
     name: '',
     description: '',
-    start_date_local: '',
-    start_time_local: '',
-    end_date_local: '',
-    end_time_local: ''
+    timezone: timezone,
+    startDateTime: getLocalTime(timezone),
+    endDateTime: getLocalTime(timezone, 1)
   };
-
-  if (prepopulate) {
-    var nowIn1Hour = getLocalTime(1);
-    var nowIn2Hours = getLocalTime(2);
-    newEvent.start_date_local = formatDateAsISO(nowIn1Hour);
-    newEvent.start_time_local = formatTimeAsISO(nowIn1Hour, true);
-    newEvent.end_date_local = formatDateAsISO(nowIn2Hours);
-    newEvent.end_time_local = formatTimeAsISO(nowIn2Hours, true);
-  }
 
   return newEvent;
 }
 
-export function mapToDbSchema(event: EventEntry) {
-  if (event === undefined || event === null) {
-    return undefined;
-  }
-  console.debug('mapToDbSchema', JSON.stringify(event));
-
-  var utcStartDateTime = convertLocalToUtc(event.start_date_local, event.start_time_local);
-  var utcStartDate = utcStartDateTime.split(" ")[0];
-  var utcStartTime = utcStartDateTime.split(" ")[1];
-  var utcEndDateTime = convertLocalToUtc(event.end_date_local, event.end_time_local);
-  var utcEndDate = utcEndDateTime.split(" ")[0];
-  var utcEndTime = utcEndDateTime.split(" ")[1];
+export function mapToDbSchema(event: EventEntry): EventSchema {
+  assert(event, "mapToDbSchema: event is not specified");
+  console.debug('mapToDbSchema/before', JSON.stringify(event));
 
   var row: EventSchema = {
     id: event.id,
     name: event.name,
     description: event.description,
-    start_date_utc: utcStartDate,
-    start_time_utc: utcStartTime,
-    end_date_utc: utcEndDate,
-    end_time_utc: utcEndTime,
+    timezone: timezoneLocalNZ, // hardcoded for this assignment, would be pulled from a User record normally
+    start_datetime_utc: event.startDateTime.toUTC().toSeconds().toString(),
+    end_datetime_utc: event.endDateTime.toUTC().toString(),
   };
-  console.debug('row', JSON.stringify(row));
+  console.debug('mapToDbSchema/after', JSON.stringify(row));
   return row;
 }
 
-export function mapToModel(event: EventSchema) {
-  if (event === undefined || event === null) {
-    return undefined;
-  }
-  console.debug('mapToModel', JSON.stringify(event));
+export function mapToModel(event: EventSchema): EventEntry {
+  assert(event, "mapToModel: event is not specified");
+  console.debug('mapToModel/before', JSON.stringify(event));
 
-  var localStartDateTime = convertUtcToLocal(event.start_date_utc, event.start_time_utc);
-  var localStartDate = localStartDateTime.split(" ")[0];
-  var localStartTime = localStartDateTime.split(" ")[1];
-  var localEndDateTime = convertUtcToLocal(event.end_date_utc, event.end_time_utc);
-  var localEndDate = localEndDateTime.split(" ")[0];
-  var localEndTime = localEndDateTime.split(" ")[1];
+  var startDate = DateTime
+    .fromSeconds(parseInt(event.start_datetime_utc), { locale: timezoneUtc })
+    .setZone(event.timezone);
+
+  var endDate = DateTime
+    .fromSeconds(parseInt(event.end_datetime_utc), { locale: timezoneUtc })
+    .setZone(event.timezone);
 
   var model: EventEntry = {
     id: event.id,
     name: event.name,
+    timezone: event.timezone,
     description: event.description ?? undefined,
-    start_date_local: localStartDate,
-    start_time_local: localStartTime,
-    end_date_local: localEndDate,
-    end_time_local: localEndTime,
+    startDateTime: startDate,
+    endDateTime: endDate,
   };
-  console.debug('model', JSON.stringify(model));
+
+  console.debug('mapToModel/after', JSON.stringify(model));
   return model;
 }

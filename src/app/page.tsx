@@ -1,10 +1,11 @@
 import { GetByDate, Delete } from '@/data/eventsRepo';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
-import { getLocalTime, formatDateAsISO, formatTimeAsISO } from '@/lib/dateConversion';
+import { getLocalTime, getStartAndEndOfDayInMsUtc } from '@/lib/dateConversion';
 import { redirect } from "next/navigation";
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { EventEntry } from '@/lib/models';
+import { timezoneLocalNZ } from '@/data/schema';
 
 export default async function Home({
   params,
@@ -16,11 +17,12 @@ export default async function Home({
 
   const qs = await searchParams;
   const qsDate = qs?.d as string;
-  const selectedDate = qsDate ?? formatDateAsISO(getLocalTime());
-  const eventList = await loadEventList(selectedDate);
+  const qsTimezone = qs?.tz as string;
+  const eventList = await loadEventList(qsDate, qsTimezone);
 
-  async function loadEventList(selectedDate: string) {
-    return await GetByDate(selectedDate);
+  async function loadEventList(dateLocalIso: string, timezone:string) {
+    const { startMs, endMs } = getStartAndEndOfDayInMsUtc(dateLocalIso, timezone);
+    return await GetByDate(startMs, endMs);
   }
 
   async function onSelectedDateChanged(d: FormData) {
@@ -61,7 +63,7 @@ export default async function Home({
             {eventList.map((e: EventEntry) => (
               <Accordion key={e.id!}>
                 <AccordionSummary>
-                  <Chip label={e.start_time_local} color={"info"} />
+                  <Chip label={e.startDateTime.toISOTime({ suppressSeconds: true, suppressMilliseconds: true })} color={"info"} />
                   <Typography sx={{ paddingLeft: 1, paddingTop: 0.5 }} component="span" fontWeight={'bold'}>
                     {e.name}
                   </Typography>
