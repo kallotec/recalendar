@@ -42,7 +42,7 @@ export function generateNewEventEntry(timezone: string): EventEntry {
     description: '',
     timezone: timezone,
     startDateTime: getLocalTime(timezone),
-    endDateTime: getLocalTime(timezone, 1)
+    endDateTime: getLocalTime(timezone).plus({ hours: 1 })
   };
 
   return newEvent;
@@ -50,7 +50,6 @@ export function generateNewEventEntry(timezone: string): EventEntry {
 
 export function mapToDbSchema(event: EventEntry): EventSchema {
   assert(event, "mapToDbSchema: event is not specified");
-  console.debug('mapToDbSchema/before', JSON.stringify(event));
 
   var row: EventSchema = {
     id: event.id,
@@ -58,15 +57,13 @@ export function mapToDbSchema(event: EventEntry): EventSchema {
     description: event.description,
     timezone: timezoneLocalNZ, // hardcoded for this assignment, would be pulled from a User record normally
     start_datetime_utc: event.startDateTime.toUTC().toSeconds().toString(),
-    end_datetime_utc: event.endDateTime.toUTC().toString(),
+    end_datetime_utc: event.endDateTime.toUTC().toSeconds().toString(),
   };
-  console.debug('mapToDbSchema/after', JSON.stringify(row));
   return row;
 }
 
 export function mapToModel(event: EventSchema): EventEntry {
   assert(event, "mapToModel: event is not specified");
-  console.debug('mapToModel/before', JSON.stringify(event));
 
   var startDate = DateTime
     .fromSeconds(parseInt(event.start_datetime_utc), { locale: timezoneUtc })
@@ -85,6 +82,5 @@ export function mapToModel(event: EventSchema): EventEntry {
     endDateTime: endDate,
   };
 
-  console.debug('mapToModel/after', JSON.stringify(model));
   return model;
 }

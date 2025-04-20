@@ -16,14 +16,14 @@ type EditEventFormParams = {
 export default function EditEventForm(p: EditEventFormParams) {
 
     const { id, name, description, timezone, startDateTime: start_datetime, endDateTime: end_datetime } = p.event;
+    const timeSettings = { includeOffset: false, suppressMilliseconds: true, suppressSeconds: true };
     const startDateIso: string = start_datetime.toISODate()!;
-    const startTimeIso: string = start_datetime.toISOTime()!;
+    const startTimeIso: string = start_datetime.toISOTime(timeSettings)!;
     const endDateIso: string = end_datetime.toISODate()!;
-    const endTimeIso: string = end_datetime.toISOTime()!;
+    const endTimeIso: string = end_datetime.toISOTime(timeSettings)!;
 
     async function formSubmit(d: FormData) {
         'use server';
-        console.debug('formSubmit', JSON.stringify(d));
         const idStr = (d.get('id') as string);
         const tz = d.get('timezone') as string;
         const model: EventEntry = {
@@ -42,82 +42,78 @@ export default function EditEventForm(p: EditEventFormParams) {
         };
         await Upsert(model);
 
-        redirect('/');
+        redirect(`/?d=${model.startDateTime.toISODate()!}`);
     }
 
     return (
-        <Paper elevation={2}>
-            <form action={formSubmit}>
-                <Grid container spacing={2}>
+        <form action={formSubmit}>
+            <Grid container spacing={2}>
 
-                    <Grid size={12}>
-                        {id === undefined && (<h2>New Event</h2>)}
-                        {id !== undefined && (<h2>Edit Event</h2>)}
-                        <input type="hidden" name="id" defaultValue={id} />
-                        <input type="hidden" name="timezone" defaultValue={timezone} />
-                    </Grid>
-
-                    <Grid size={12}>
-                        <TextField fullWidth
-                            name="name"
-                            label="Name"
-                            variant="outlined"
-                            defaultValue={name} />
-                    </Grid>
-
-                    <Grid size={12}>
-                        <TextField fullWidth
-                            name="description"
-                            label="Description"
-                            variant="outlined"
-                            multiline={true}
-                            rows={5}
-                            defaultValue={description} />
-                    </Grid>
-
-                    <Grid size={6}>
-                        <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="startTimeIso">Start date</label>
-                            <input
-                                type="date"
-                                name="startTimeIso"
-                                defaultValue={startTimeIso} />
-                        </Stack>
-                    </Grid>
-                    <Grid size={6}>
-                        <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="startTimeIso">Start time</label>
-                            <input
-                                type="time"
-                                name="startTimeIso"
-                                defaultValue={startTimeIso} />
-                        </Stack>
-                    </Grid>
-
-                    <Grid size={6}>
-                        <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="endDateIso">End date</label>
-                            <input
-                                type="date"
-                                name="endDateIso"
-                                defaultValue={endDateIso} />
-                        </Stack>
-                    </Grid>
-                    <Grid size={6}>
-                        <Stack direction={'row'} spacing={1}>
-                            <label htmlFor="endTimeIso">End time</label>
-                            <input
-                                type="time"
-                                name="endTimeIso"
-                                defaultValue={endTimeIso} />
-                        </Stack>
-                    </Grid>
-
-                    <Grid size={12} textAlign={'end'}>
-                        <Button type="submit" variant="contained">Save</Button>&nbsp;
-                        <Link href="/">Close</Link>
-                    </Grid>
+                <Grid size={12}>
+                    <input type="hidden" name="id" defaultValue={id} />
+                    <input type="hidden" name="timezone" defaultValue={timezone} />
                 </Grid>
-            </form>
-        </Paper>)
+
+                <Grid size={12}>
+                    <TextField fullWidth
+                        name="name"
+                        label="Name"
+                        variant="outlined"
+                        defaultValue={name} />
+                </Grid>
+
+                <Grid size={12}>
+                    <TextField fullWidth
+                        name="description"
+                        label="Description"
+                        variant="outlined"
+                        multiline={true}
+                        rows={5}
+                        defaultValue={description} />
+                </Grid>
+
+                <Grid size={6}>
+                    <Stack direction={'row'} spacing={1}>
+                        <label htmlFor="startDateIso">Start date</label>
+                        <input
+                            type="date"
+                            name="startDateIso"
+                            defaultValue={startDateIso} />
+                    </Stack>
+                </Grid>
+                <Grid size={6}>
+                    <Stack direction={'row'} spacing={1}>
+                        <label htmlFor="startTimeIso">Start time</label>
+                        <input
+                            type="time"
+                            name="startTimeIso"
+                            defaultValue={startTimeIso} />
+                    </Stack>
+                </Grid>
+
+                <Grid size={6}>
+                    <Stack direction={'row'} spacing={1}>
+                        <label htmlFor="endDateIso">End date</label>
+                        <input
+                            type="date"
+                            name="endDateIso"
+                            defaultValue={endDateIso} />
+                    </Stack>
+                </Grid>
+                <Grid size={6}>
+                    <Stack direction={'row'} spacing={1}>
+                        <label htmlFor="endTimeIso">End time</label>
+                        <input
+                            type="time"
+                            name="endTimeIso"
+                            defaultValue={endTimeIso} />
+                    </Stack>
+                </Grid>
+
+                <Grid size={12} textAlign={'end'}>
+                    <Button type="submit" variant="contained">Save</Button>&nbsp;
+                    <Link href="/">Close</Link>
+                </Grid>
+            </Grid>
+        </form>)
 }

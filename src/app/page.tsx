@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { EventEntry } from '@/lib/models';
 import { timezoneLocalNZ } from '@/data/schema';
+import { DateTime } from 'luxon';
 
 export default async function Home({
   params,
@@ -58,12 +59,17 @@ export default async function Home({
           </form>
 
           <Box>
-            <Link href={'/edit/new'}>New</Link>
-            <Divider />
+            <Link href={'/edit/new'}>Create Event</Link>
+            <Divider sx={{marginTop: 2, marginBottom: 2}} />
+            {eventList?.length === 0 && (
+              <>No events..</>
+            )}
             {eventList.map((e: EventEntry) => (
               <Accordion key={e.id!}>
                 <AccordionSummary>
-                  <Chip label={e.startDateTime.toISOTime({ suppressSeconds: true, suppressMilliseconds: true })} color={"info"} />
+                  <Chip 
+                    label={e.startDateTime.toLocaleString(DateTime.TIME_SIMPLE)} 
+                    color={"info"} />
                   <Typography sx={{ paddingLeft: 1, paddingTop: 0.5 }} component="span" fontWeight={'bold'}>
                     {e.name}
                   </Typography>
