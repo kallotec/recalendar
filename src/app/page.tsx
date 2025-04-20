@@ -1,12 +1,13 @@
 import { GetByDate, Delete } from '@/data/eventsRepo';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
-import { getStartAndEndOfDayInSecsUtc } from '@/lib/dateConversion';
+import { getStartAndEndOfDayInSecsUtc, localIsoDateToUtc } from '@/lib/dateConversion';
 import { redirect } from "next/navigation";
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
-import { EventEntry } from '@/lib/models';
+import { EventEntry, MoonPhaseEntry } from '@/lib/models';
 import { DateTime } from 'luxon';
 import DateSelector from '@/ui/DateSelector';
+import { GetMoonPhaseByDate } from '@/data/moonPhaseRepo';
 
 export default async function Home({
   searchParams,
@@ -22,7 +23,15 @@ export default async function Home({
 
   async function loadEventList(dateLocalIso: string, timezone: string) {
     const { startSecs, endSecs } = getStartAndEndOfDayInSecsUtc(dateLocalIso, timezone);
-    return await GetByDate(startSecs, endSecs);
+    const utcDate = localIsoDateToUtc(dateLocalIso, timezone);
+    const matchingPhase = await GetMoonPhaseByDate(utcDate.toISODate()!, timezone);
+    const eventEntries = await GetByDate(startSecs, endSecs);
+    const results = [];
+    if (matchingPhase) {
+      results.push(matchingPhase);
+    }
+    results.push(eventEntries);
+    return results;
   }
 
   async function onSelectedDateChanged(d: FormData) {
@@ -69,26 +78,28 @@ export default async function Home({
             {isDateSelected && eventList?.length === 0 && (
               <>No events..</>
             )}
-            {eventList.map((e: EventEntry) => (
-              <Accordion key={e.id!}>
-                <AccordionSummary>
-                  <Chip
-                    label={e.startDateTime.toLocaleString(DateTime.TIME_SIMPLE)}
-                    color={"info"} />
-                  <Typography sx={{ paddingLeft: 1, paddingTop: 0.5 }} component="span" fontWeight={'bold'}>
-                    {e.name}
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails sx={{ background: '#efefef' }}>
-                  <Typography padding={2}>{e.description}</Typography>
-                  <Divider />
-                  <Link href={`/edit/${e.id}`}>Edit</Link>
-                  <form action={onDeleteClicked}>
-                    <input type="hidden" name="id" defaultValue={e.id} />
-                    <Button type="submit">Delete</Button>
-                  </form>
-                </AccordionDetails>
-              </Accordion>
+            {eventList.map((e: any) => (
+              {e instanceOf EventEntry && (
+                <Accordion key={e.id!}>
+                  <AccordionSummary>
+                    <Chip
+                      label={e.startDateTime.toLocaleString(DateTime.TIME_SIMPLE)}
+                      color={"info"} />
+                    <Typography sx={{ paddingLeft: 1, paddingTop: 0.5 }} component="span" fontWeight={'bold'}>
+                      {e.name}
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ background: '#efefef' }}>
+                    <Typography padding={2}>{e.description}</Typography>
+                    <Divider />
+                    <Link href={`/edit/${e.id}`}>Edit</Link>
+                    <form action={onDeleteClicked}>
+                      <input type="hidden" name="id" defaultValue={e.id} />
+                      <Button type="submit">Delete</Button>
+                    </form>
+                  </AccordionDetails>
+                </Accordion>
+              )}
             ))}
           </Box>
 

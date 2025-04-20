@@ -3,10 +3,10 @@ import { DateTime } from 'luxon';
 
 export function getLocalTime(timezone: string): DateTime {
     return DateTime.now()
-    .setZone(timezone)
-    .endOf('hour')
-    .plus({ minutes: 1})
-    .startOf('minute');
+        .setZone(timezone)
+        .endOf('hour')
+        .plus({ minutes: 1 })
+        .startOf('minute');
 }
 
 export function parseIsoLocalDateAndTime(dateStrLocalIso: string, timeStrLocalIso: string, tz: string): DateTime {
@@ -15,9 +15,14 @@ export function parseIsoLocalDateAndTime(dateStrLocalIso: string, timeStrLocalIs
     return dt;
 }
 
+export function localIsoDateToUtc(dateIsoLocal: string, timezone: string) {
+    return DateTime.fromISO(dateIsoLocal, { locale: timezone });
+}
+
 export function getStartAndEndOfDayInSecsUtc(dateIsoLocal: string, timezone: string) {
-    var startLocal = DateTime.fromISO(dateIsoLocal, { locale: timezone }).startOf('day');
-    var endLocal = DateTime.fromISO(dateIsoLocal, { locale: timezone }).endOf('day');
+    var date = localIsoDateToUtc(dateIsoLocal, timezone);
+    var startLocal = date.startOf('day');
+    var endLocal = date.endOf('day');
     return {
         startSecs: startLocal.toUTC().toSeconds(),
         endSecs: endLocal.toUTC().toSeconds()
