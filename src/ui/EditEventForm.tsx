@@ -1,74 +1,61 @@
-import { EventEntry } from '@/lib/models';
+'use client';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Link from 'next/link';
-import { Upsert } from '@/data/eventsRepo';
-import { redirect } from 'next/navigation';
 import Stack from '@mui/material/Stack';
-import { parseIsoLocalDateAndTime } from '@/lib/dateConversion';
+import { editFormSubmit, formSubmitState } from '@/ui/EditEventFormHandlers';
+import { DateTime } from 'luxon';
+import { useActionState } from 'react';
 
 type EditEventFormParams = {
-    event: EventEntry
+    id: number | undefined,
+    name: string,
+    description?: string,
+    timezone: string,
+    startDateTimeSecs: number,
+    endDateTimeSecs: number
 }
+const initialState: formSubmitState = {
+    error: ''
+};
 
 export default function EditEventForm(p: EditEventFormParams) {
-
-    const { id, name, description, timezone, startDateTime: start_datetime, endDateTime: end_datetime } = p.event;
+    const [state, submitAction] = useActionState(editFormSubmit, initialState);
+    const { id, name, description, timezone, startDateTimeSecs, endDateTimeSecs } = p;
     const timeSettings = { includeOffset: false, suppressMilliseconds: true, suppressSeconds: true };
-    const startDateIso: string = start_datetime.toISODate()!;
-    const startTimeIso: string = start_datetime.toISOTime(timeSettings)!;
-    const endDateIso: string = end_datetime.toISODate()!;
-    const endTimeIso: string = end_datetime.toISOTime(timeSettings)!;
-
-    async function formSubmit(d: FormData) {
-        'use server';
-        const idStr = (d.get('id') as string);
-        const tz = d.get('timezone') as string;
-        const model: EventEntry = {
-            id: (idStr?.length > 0 ? +idStr : undefined),
-            name: d.get('name') as string,
-            description: d.get('description') as string,
-            timezone: tz,
-            startDateTime: parseIsoLocalDateAndTime(
-                d.get('startDateIso') as string,
-                d.get('startTimeIso') as string,
-                tz),
-            endDateTime: parseIsoLocalDateAndTime(
-                d.get('endDateIso') as string,
-                d.get('endTimeIso') as string,
-                tz)
-        };
-        await Upsert(model);
-
-        redirect(`/?d=${model.startDateTime.toISODate()!}`);
-    }
+    const startDateTime = DateTime.fromSeconds(startDateTimeSecs, { locale: timezone });
+    const startDateIso: string = startDateTime.toISODate()!;
+    const startTimeIso: string = startDateTime.toISOTime(timeSettings)!;
+    const endDateTime = DateTime.fromSeconds(endDateTimeSecs, { locale: timezone });
+    const endDateIso: string = endDateTime.toISODate()!;
+    const endTimeIso: string = endDateTime.toISOTime(timeSettings)!;
 
     return (
-        <form action={formSubmit}>
+        <form action={submitAction}>
             <Grid container spacing={2}>
 
                 <Grid size={12}>
                     <input type="hidden" name="id" defaultValue={id} />
                     <input type="hidden" name="timezone" defaultValue={timezone} />
+                    {state.error ? <p className='warning-item'>{state.error}</p> : null}
                 </Grid>
 
                 <Grid size={12}>
                     <TextField fullWidth
-                        name="name"
                         label="Name"
                         variant="outlined"
+                        name="name"
                         defaultValue={name} />
                 </Grid>
 
                 <Grid size={12}>
                     <TextField fullWidth
-                        name="description"
                         label="Description"
                         variant="outlined"
                         multiline={true}
                         rows={5}
+                        name="description"
                         defaultValue={description} />
                 </Grid>
 

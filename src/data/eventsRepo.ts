@@ -16,13 +16,13 @@ export async function GetById(id: number): Promise<EventEntry> {
     return schema.mapToModel(res!)!;
 }
 
-export async function GetByDate(utcStartInMs: number, utcEndInMs: number): Promise<EventEntry[]> {
+export async function GetByDate(utcStartInSecs: number, utcEndInSecs: number): Promise<EventEntry[]> {
     const db = getClient();
     var results = await db.query.events.findMany({
-        where: and(gt(schema.events.start_datetime_utc, utcStartInMs.toString()), lt(schema.events.start_datetime_utc, utcEndInMs.toString()))
+        where: and(gt(schema.events.start_datetime_utc, utcStartInSecs.toString()), lt(schema.events.start_datetime_utc, utcEndInSecs.toString()))
     });
     return results!
-        .sort((a, b) => (a.start_datetime_utc < b.end_datetime_utc ? 1 : -1))
+        .sort((a, b) => (a.start_datetime_utc > b.end_datetime_utc ? 1 : -1))
         .map((e: schema.EventSchema) => schema.mapToModel(e)!);
 }
 

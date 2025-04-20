@@ -15,11 +15,11 @@ export function parseIsoLocalDateAndTime(dateStrLocalIso: string, timeStrLocalIs
     return dt;
 }
 
-export function getStartAndEndOfDayInMsUtc(dateIsoLocal: string, timezone: string) {
+export function getStartAndEndOfDayInSecsUtc(dateIsoLocal: string, timezone: string) {
     var startLocal = DateTime.fromISO(dateIsoLocal, { locale: timezone }).startOf('day');
     var endLocal = DateTime.fromISO(dateIsoLocal, { locale: timezone }).endOf('day');
     return {
-        startMs: startLocal.toUTC().toSeconds(),
-        endMs: endLocal.toUTC().toSeconds()
+        startSecs: startLocal.toUTC().toSeconds(),
+        endSecs: endLocal.toUTC().toSeconds()
     }
 }

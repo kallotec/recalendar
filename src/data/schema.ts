@@ -34,15 +34,20 @@ export function validateEvent(event: EventEntry): string[] {
   return errors;
 }
 
-export function generateNewEventEntry(timezone: string): EventEntry {
+export function generateNewEventEntry(isoDate: string, timezone: string): EventEntry {
+  
+  var today = DateTime.now().setZone(timezone);
+  var d = DateTime.fromISO(isoDate, { locale: timezone })
+    .plus({ hours: today.hour + 1, minutes: today.minute })
+    .startOf('hour');
 
   const newEvent: EventEntry = {
     id: undefined,
     name: '',
     description: '',
     timezone: timezone,
-    startDateTime: getLocalTime(timezone),
-    endDateTime: getLocalTime(timezone).plus({ hours: 1 })
+    startDateTime: d,
+    endDateTime: d.plus({ hours: 1 })
   };
 
   return newEvent;
