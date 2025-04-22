@@ -1,6 +1,6 @@
 import EditEventForm from "@/ui/EditEventForm";
 import { GetById } from '@/data/eventsRepo';
-import { generateNewEventEntry, timezoneLocalNZ } from '@/data/schema';
+import { generateNewEventEntry } from '@/data/schema';
 
 export default async function EditEventPage({
   params,

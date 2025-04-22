@@ -12,19 +12,17 @@ import { GetMoonPhaseByDate } from '@/data/moonPhaseRepo';
 export default async function Home({
   searchParams,
 }: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
 
-  const qs = await searchParams;
-  const qsDate = qs?.d as string || undefined;
-  const qsTimezone = qs?.tz as string || undefined;
-  const isDateSelected = (qsDate ? qsDate.length > 0 : false);
-  const events = await loadEventList(qsDate, qsTimezone);
+  const { d, tz } = await searchParams;
+  const selectedDate = d as string;
+  const selectedTimezone = tz as string;
+  const isDateSelected = (selectedDate ? selectedDate.length > 0 : false);
+  const events = (selectedDate && selectedTimezone ? await loadEventList(selectedDate, selectedTimezone) : []);
+  console.debug(selectedDate, selectedTimezone);
 
-  async function loadEventList(dateLocalIso: string | undefined, timezone: string | undefined): Promise<EventEntry[]> {
-    if (!dateLocalIso) {
-      return [];
-    }
+  async function loadEventList(dateLocalIso: string, timezone: string): Promise<EventEntry[]> {
     const { startSecs, endSecs } = getStartAndEndOfDayInSecsUtc(dateLocalIso, timezone!);
     const utcDate = localIsoDateToUtc(dateLocalIso, timezone!);
 
@@ -67,7 +65,7 @@ export default async function Home({
               <label htmlFor="selected_date">View date</label>
               <DateSelector
                 htmlName='selected_date'
-                selectedDate={qsDate}
+                selectedDate={selectedDate}
                 includeTimezoneField={true} />
               <Button type="submit">Load</Button>
             </Stack>
@@ -75,7 +73,7 @@ export default async function Home({
 
           <Box>
             {isDateSelected && (
-              <Link href={`/edit/new?d=${qsDate}&tz=${qsTimezone}`}>Create Event</Link>
+              <Link href={`/edit/new?d=${selectedDate}&tz=${selectedTimezone}`}>Create Event</Link>
             )}
             <Divider sx={{ paddingTop: 1, paddingBottom: 1 }} />
             {!isDateSelected && (

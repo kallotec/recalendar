@@ -1,4 +1,3 @@
-import assert from "node:assert";
 import { DateTime } from 'luxon';
 
 export function getLocalTime(timezone: string): DateTime {

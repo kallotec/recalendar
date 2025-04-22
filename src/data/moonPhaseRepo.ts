@@ -1,5 +1,4 @@
 'use server'
-import * as dotenv from 'dotenv';
 import { EventEntry } from "../lib/models";
 import assert from "node:assert";
 import axios from 'axios';

@@ -1,5 +1,4 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { getLocalTime } from '@/lib/dateConversion';
 import { EventEntry } from "@/lib/models";
 import { DateTime } from "luxon";
 import assert from "node:assert";
