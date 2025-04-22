@@ -9,7 +9,7 @@ export type DateSelectorParams = {
 
 export default function DateSelector(p: DateSelectorParams) {
 
-    var d = DateTime.now();
+    const d = DateTime.now();
     // if blank, default to local browser date
     const selectedDate = p.selectedDate ?? d.toISODate();
     const tz = d.zoneName;

@@ -1,5 +1,5 @@
 'use server';
-import { Upsert } from "@/data/eventsRepo";
+import { UpsertEvent } from "@/data/eventsRepo";
 import { parseIsoLocalDateAndTime } from "@/lib/dateConversion";
 import { EventEntry } from "@/lib/models";
 import { redirect } from "next/navigation";
@@ -11,9 +11,10 @@ export type formSubmitState = {
 export async function editFormSubmit(prevState: formSubmitState, d: FormData): Promise<formSubmitState> {
 
     let dateToRedirectTo = '';
+    let tz = '';
     try {
         const idStr = (d.get('id') as string);
-        const tz = d.get('timezone') as string;
+        tz = d.get('timezone') as string;
         const model: EventEntry = {
             id: (idStr?.length > 0 ? +idStr : undefined),
             name: d.get('name') as string,
@@ -26,21 +27,22 @@ export async function editFormSubmit(prevState: formSubmitState, d: FormData): P
             endDateTime: parseIsoLocalDateAndTime(
                 d.get('endDateIso') as string,
                 d.get('endTimeIso') as string,
-                tz)
+                tz),
+            isAllDay: false
         };
 
         // validate (if more complicated, switch to using a framework like Yup or Zod)
-        var nameSpecified = (model.name?.length > 0);
+        const nameSpecified = (model.name?.length > 0);
         if (!nameSpecified) {
             return { error: 'Name must be supplied' };
         }
-        var startDateBeforeEndDate = (model.startDateTime < model.endDateTime);
+        const startDateBeforeEndDate = (model.startDateTime < model.endDateTime);
         if (!startDateBeforeEndDate) {
             return { error: 'Start date must be before end date' };
         }
 
         // save to db
-        await Upsert(model);
+        await UpsertEvent(model);
 
         // set redirect
         dateToRedirectTo = model.startDateTime.toISODate()!;
@@ -55,7 +57,7 @@ export async function editFormSubmit(prevState: formSubmitState, d: FormData): P
     } finally {
         if (dateToRedirectTo) {
             // go back to event list for this event's start date
-            redirect(`/?d=${dateToRedirectTo}`);
+            redirect(`/?d=${dateToRedirectTo}&tz=${tz}`);
         }
     }
 }

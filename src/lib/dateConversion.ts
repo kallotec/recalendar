@@ -10,7 +10,7 @@ export function getLocalTime(timezone: string): DateTime {
 }
 
 export function parseIsoLocalDateAndTime(dateStrLocalIso: string, timeStrLocalIso: string, tz: string): DateTime {
-    var isoLocalDateTime = dateStrLocalIso + "T" + timeStrLocalIso;
+    const isoLocalDateTime = dateStrLocalIso + "T" + timeStrLocalIso;
     const dt = DateTime.fromISO(isoLocalDateTime, { zone: tz });
     return dt;
 }
@@ -20,9 +20,9 @@ export function localIsoDateToUtc(dateIsoLocal: string, timezone: string) {
 }
 
 export function getStartAndEndOfDayInSecsUtc(dateIsoLocal: string, timezone: string) {
-    var date = localIsoDateToUtc(dateIsoLocal, timezone);
-    var startLocal = date.startOf('day');
-    var endLocal = date.endOf('day');
+    const date = localIsoDateToUtc(dateIsoLocal, timezone);
+    const startLocal = date.startOf('day');
+    const endLocal = date.endOf('day');
     return {
         startSecs: startLocal.toUTC().toSeconds(),
         endSecs: endLocal.toUTC().toSeconds()

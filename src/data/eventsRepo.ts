@@ -10,15 +10,15 @@ import assert from "node:assert";
 export async function GetById(id: number): Promise<EventEntry> {
     assert(id > 0, "id arg not specified");
     const db = getClient();
-    var res = await db.query.events.findFirst({
+    const res = await db.query.events.findFirst({
         where: eq(schema.events.id, id)
     });
     return schema.mapToModel(res!)!;
 }
 
-export async function GetByDate(utcStartInSecs: number, utcEndInSecs: number): Promise<EventEntry[]> {
+export async function GetEventsByDate(utcStartInSecs: number, utcEndInSecs: number): Promise<EventEntry[]> {
     const db = getClient();
-    var results = await db.query.events.findMany({
+    const results = await db.query.events.findMany({
         where: and(gt(schema.events.start_datetime_utc, utcStartInSecs.toString()), lt(schema.events.start_datetime_utc, utcEndInSecs.toString()))
     });
     return results!
@@ -26,7 +26,7 @@ export async function GetByDate(utcStartInSecs: number, utcEndInSecs: number): P
         .map((e: schema.EventSchema) => schema.mapToModel(e)!);
 }
 
-export async function Upsert(model: EventEntry): Promise<number> {
+export async function UpsertEvent(model: EventEntry): Promise<number> {
     assert(model, "model arg not specified");
     const idParam: number = model.id as number;
     const row = schema.mapToDbSchema(model)!;
@@ -55,7 +55,7 @@ export async function Upsert(model: EventEntry): Promise<number> {
     }
 }
 
-export async function Delete(id: number) {
+export async function DeleteEventById(id: number) {
     assert(id, "id not specified");
     const db = getClient();
     return await db

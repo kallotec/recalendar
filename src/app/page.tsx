@@ -1,10 +1,10 @@
-import { GetByDate, Delete } from '@/data/eventsRepo';
+import { GetEventsByDate, DeleteEventById } from '@/data/eventsRepo';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
 import { getStartAndEndOfDayInSecsUtc, localIsoDateToUtc } from '@/lib/dateConversion';
 import { redirect } from "next/navigation";
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
-import { EventEntry, MoonPhaseEntry } from '@/lib/models';
+import { EventEntry } from '@/lib/models';
 import { DateTime } from 'luxon';
 import DateSelector from '@/ui/DateSelector';
 import { GetMoonPhaseByDate } from '@/data/moonPhaseRepo';
@@ -16,35 +16,41 @@ export default async function Home({
 }) {
 
   const qs = await searchParams;
-  const qsDate = qs?.d as string;
-  const qsTimezone = qs?.tz as string;
-  const isDateSelected = (qsDate?.length > 0);
-  const eventList = (qsDate?.length > 0) ? await loadEventList(qsDate, qsTimezone) : [];
+  const qsDate = qs?.d as string || undefined;
+  const qsTimezone = qs?.tz as string || undefined;
+  const isDateSelected = (qsDate ? qsDate.length > 0 : false);
+  const events = await loadEventList(qsDate, qsTimezone);
 
-  async function loadEventList(dateLocalIso: string, timezone: string) {
-    const { startSecs, endSecs } = getStartAndEndOfDayInSecsUtc(dateLocalIso, timezone);
-    const utcDate = localIsoDateToUtc(dateLocalIso, timezone);
-    const matchingPhase = await GetMoonPhaseByDate(utcDate.toISODate()!, timezone);
-    const eventEntries = await GetByDate(startSecs, endSecs);
-    const results = [];
-    if (matchingPhase) {
-      results.push(matchingPhase);
+  async function loadEventList(dateLocalIso: string | undefined, timezone: string | undefined): Promise<EventEntry[]> {
+    if (!dateLocalIso) {
+      return [];
     }
-    results.push(eventEntries);
-    return results;
+    const { startSecs, endSecs } = getStartAndEndOfDayInSecsUtc(dateLocalIso, timezone!);
+    const utcDate = localIsoDateToUtc(dateLocalIso, timezone!);
+
+    const [matchingPhase, events] = await Promise.all([
+      GetMoonPhaseByDate(utcDate.toISODate()!, timezone!),
+      GetEventsByDate(startSecs, endSecs)
+    ]);
+
+    if (matchingPhase) {
+      events.unshift(matchingPhase);
+    }
+
+    return events;
   }
 
   async function onSelectedDateChanged(d: FormData) {
     'use server';
-    var date = d.get('selected_date') as string;
-    var tz = d.get('timezone') as string;
+    const date = d.get('selected_date') as string;
+    const tz = d.get('timezone') as string;
     redirect(`/?d=${date}&tz=${tz}`);
   }
 
   async function onDeleteClicked(d: FormData) {
     'use server';
-    var id: number = +(d.get('id') as string);
-    await Delete(id);
+    const id: number = +(d.get('id') as string);
+    await DeleteEventById(id);
     revalidatePath('/');
   }
 
@@ -75,37 +81,42 @@ export default async function Home({
             {!isDateSelected && (
               <p>Select a date and click load</p>
             )}
-            {isDateSelected && eventList?.length === 0 && (
+            {isDateSelected && events.length == 0 && (
               <>No events..</>
             )}
-            {eventList.map((e: any) => (
-              {e instanceOf EventEntry && (
-                <Accordion key={e.id!}>
-                  <AccordionSummary>
+            {events.map((e: EventEntry) => (
+              <Accordion key={e.id || e.name}>
+                <AccordionSummary>
+                  {!e.isAllDay && (
                     <Chip
                       label={e.startDateTime.toLocaleString(DateTime.TIME_SIMPLE)}
                       color={"info"} />
-                    <Typography sx={{ paddingLeft: 1, paddingTop: 0.5 }} component="span" fontWeight={'bold'}>
-                      {e.name}
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails sx={{ background: '#efefef' }}>
-                    <Typography padding={2}>{e.description}</Typography>
-                    <Divider />
-                    <Link href={`/edit/${e.id}`}>Edit</Link>
-                    <form action={onDeleteClicked}>
-                      <input type="hidden" name="id" defaultValue={e.id} />
-                      <Button type="submit">Delete</Button>
-                    </form>
-                  </AccordionDetails>
-                </Accordion>
-              )}
+                  )}
+                  {e.isAllDay && (
+                    <Chip label="All day" color={'success'} />
+                  )}
+                  <Typography sx={{ paddingLeft: 1, paddingTop: 0.5 }} component="span" fontWeight={'bold'}>
+                    {e.name}
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={{ background: '#efefef' }}>
+                  <Typography padding={2}>{e.description}</Typography>
+                  {e.id && (
+                    <Stack direction={'row'}>
+                      <Link href={`/edit/${e.id}`}>Edit</Link>
+                      <form action={onDeleteClicked}>
+                        <input type="hidden" name="id" defaultValue={e.id} />
+                        <Button type="submit">Delete</Button>
+                      </form>
+                    </Stack>)}
+                </AccordionDetails>
+              </Accordion>
             ))}
           </Box>
 
         </Grid>
 
       </Grid>
-    </main>
+    </main >
   );
 }

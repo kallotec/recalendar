@@ -19,14 +19,14 @@ export const events = sqliteTable("events", {
 export type EventSchema = typeof events.$inferInsert;
 
 export function validateEvent(event: EventEntry): string[] {
-  var nameValid = event.name?.length > 0;
-  var errors: string[] = [];
+  const nameValid = event.name?.length > 0;
+  const errors: string[] = [];
 
   if (!nameValid) {
     errors.push('Name is a required field');
   }
 
-  var startEndDateValid = (event.startDateTime <= event.endDateTime); // works due to ISO string format
+  const startEndDateValid = (event.startDateTime <= event.endDateTime); // works due to ISO string format
   if (!startEndDateValid) {
     errors.push('Start Date must be before End Date');
   }
@@ -36,8 +36,8 @@ export function validateEvent(event: EventEntry): string[] {
 
 export function generateNewEventEntry(isoDate: string, timezone: string): EventEntry {
   
-  var today = DateTime.now().setZone(timezone);
-  var d = DateTime.fromISO(isoDate, { locale: timezone })
+  const today = DateTime.now().setZone(timezone);
+  const d = DateTime.fromISO(isoDate, { locale: timezone })
     .plus({ hours: today.hour + 1, minutes: today.minute })
     .startOf('hour');
 
@@ -47,7 +47,8 @@ export function generateNewEventEntry(isoDate: string, timezone: string): EventE
     description: '',
     timezone: timezone,
     startDateTime: d,
-    endDateTime: d.plus({ hours: 1 })
+    endDateTime: d.plus({ hours: 1 }),
+    isAllDay: false
   };
 
   return newEvent;
@@ -56,7 +57,7 @@ export function generateNewEventEntry(isoDate: string, timezone: string): EventE
 export function mapToDbSchema(event: EventEntry): EventSchema {
   assert(event, "mapToDbSchema: event is not specified");
 
-  var row: EventSchema = {
+  const row: EventSchema = {
     id: event.id,
     name: event.name,
     description: event.description,
@@ -70,21 +71,22 @@ export function mapToDbSchema(event: EventEntry): EventSchema {
 export function mapToModel(event: EventSchema): EventEntry {
   assert(event, "mapToModel: event is not specified");
 
-  var startDate = DateTime
+  const startDate = DateTime
     .fromSeconds(parseInt(event.start_datetime_utc), { locale: timezoneUtc })
     .setZone(event.timezone);
 
-  var endDate = DateTime
+  const endDate = DateTime
     .fromSeconds(parseInt(event.end_datetime_utc), { locale: timezoneUtc })
     .setZone(event.timezone);
 
-  var model: EventEntry = {
+  const model: EventEntry = {
     id: event.id,
     name: event.name,
     timezone: event.timezone,
     description: event.description ?? undefined,
     startDateTime: startDate,
     endDateTime: endDate,
+    isAllDay: false
   };
 
   return model;
